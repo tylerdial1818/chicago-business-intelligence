@@ -1,6 +1,5 @@
 package main
 
-
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 //
@@ -17,7 +16,6 @@ package main
 //
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
-
 
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
@@ -195,11 +193,10 @@ type CCVIJsonRecords []struct {
 	CCVI_category              string `json:"ccvi_category"`
 }
 
-
 // Declare my database connection
 var db *sql.DB
 
-// The main package can has the init function. 
+// The main package can has the init function.
 // The init function will be triggered before the main function
 
 func init() {
@@ -224,7 +221,7 @@ func init() {
 
 	//Option 4
 	//Database application running on Google Cloud Platform.
-	db_connection := "user=postgres dbname=chicago_business_intelligence password=root host=/cloudsql/ADD_YOUR_CONNECTION_NAME_FROM_GCP sslmode=disable port = 5432"
+	db_connection := "user=postgres dbname=chicago_business_intelligence password=root host=/cloudsql/Astately-lambda-469721-p8:us-central1:mypostgres sslmode=disable port = 5432"
 
 	db, err = sql.Open("postgres", db_connection)
 	if err != nil {
@@ -240,7 +237,6 @@ func init() {
 	//}
 
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -306,10 +302,8 @@ func main() {
 
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
-
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	name := os.Getenv("PROJECT_ID")
@@ -401,7 +395,6 @@ func GetTaxiTrips(db *sql.DB) {
 	var taxi_trips_list_1 TaxiTripsJsonRecords
 	json.Unmarshal(body_1, &taxi_trips_list_1)
 
-
 	// Get the Taxi Trip list for rideshare companies like Uber/Lyft list
 	// Transportation-Network-Providers-Trips:
 	var url_2 = "https://data.cityofchicago.org/resource/m6dm-c72p.json?$limit=500"
@@ -420,11 +413,9 @@ func GetTaxiTrips(db *sql.DB) {
 	s := fmt.Sprintf("\n\n Transportation-Network-Providers-Trips number of SODA records received = %d\n\n", len(taxi_trips_list_2))
 	io.WriteString(os.Stdout, s)
 
-
 	// Add the Taxi medallions list & rideshare companies like Uber/Lyft list
 
 	taxi_trips_list := append(taxi_trips_list_1, taxi_trips_list_2...)
-
 
 	// Process the list
 
@@ -1164,40 +1155,42 @@ func GetBuildingPermits(db *sql.DB) {
 func GetCovidDetails(db *sql.DB) {
 
 	fmt.Println("ADD-YOUR-CODE-HERE - To Implement GetCovidDetails")
-	
+
 }
 
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-//Sample dataset reviewed:
-//"geography_type":"CA",
-//"community_area_or_zip":"70",
-//"community_area_name":"Ashburn",
-//"ccvi_score":"45.1",
-//"ccvi_category":"MEDIUM",
-//"rank_socioeconomic_status":"34",
-//"rank_household_composition":"32",
-//"rank_adults_no_pcp":"28",
-//"rank_cumulative_mobility_ratio":"45",
-//"rank_frontline_essential_workers":"48",
-//"rank_age_65_plus":"29",
-//"rank_comorbid_conditions":"33",
-//"rank_covid_19_incidence_rate":"59",
-//"rank_covid_19_hospital_admission_rate":"66",
-//"rank_covid_19_crude_mortality_rate":"39",
-//"location":{"type":"Point",
-//			"coordinates":
-//					0	-87.7083657043
-//					1	41.7457577128
-//":@computed_region_rpca_8um6":"8",
-//":@computed_region_vrxf_vc4k":"69",
-//":@computed_region_6mkv_f3dw":"4300",
-//":@computed_region_bdys_3d7i":"199",
-//":@computed_region_43wa_7qmu":"30"
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////
+// Sample dataset reviewed:
+// "geography_type":"CA",
+// "community_area_or_zip":"70",
+// "community_area_name":"Ashburn",
+// "ccvi_score":"45.1",
+// "ccvi_category":"MEDIUM",
+// "rank_socioeconomic_status":"34",
+// "rank_household_composition":"32",
+// "rank_adults_no_pcp":"28",
+// "rank_cumulative_mobility_ratio":"45",
+// "rank_frontline_essential_workers":"48",
+// "rank_age_65_plus":"29",
+// "rank_comorbid_conditions":"33",
+// "rank_covid_19_incidence_rate":"59",
+// "rank_covid_19_hospital_admission_rate":"66",
+// "rank_covid_19_crude_mortality_rate":"39",
+// "location":{"type":"Point",
+//
+//	"coordinates":
+//			0	-87.7083657043
+//			1	41.7457577128
+//
+// ":@computed_region_rpca_8um6":"8",
+// ":@computed_region_vrxf_vc4k":"69",
+// ":@computed_region_6mkv_f3dw":"4300",
+// ":@computed_region_bdys_3d7i":"199",
+// ":@computed_region_43wa_7qmu":"30"
+// //////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////
 func GetCCVIDetails(db *sql.DB) {
 
 	fmt.Println("ADD-YOUR-CODE-HERE - To Implement GetCCVIDetails")
-	
+
 }
