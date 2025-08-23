@@ -24,7 +24,3 @@ images:
 - gcr.io/stately-lambda-469721-p8/go-microservice
 - gcr.io/stately-lambda-469721-p8/pgadmin
 
-# The trigger wouldn't work without this logging setting addition
-options:
-  logging: CLOUD_LOGGING_ONLY
-
