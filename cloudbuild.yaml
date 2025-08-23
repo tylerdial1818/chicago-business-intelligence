@@ -5,7 +5,7 @@ steps:
 - name: "gcr.io/cloud-builders/docker"
   args: ['tag', 'dpage/pgadmin4','gcr.io/stately-lambda-469721-p8/pgadmin']
 - name: "gcr.io/cloud-builders/docker"
-  args: ['push', 'gcr.io/ADD_Ystately-lambda-469721-p8/pgadmin']
+  args: ['push', 'gcr.io/stately-lambda-469721-p8/pgadmin']
   
 - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
   entrypoint: gcloud
