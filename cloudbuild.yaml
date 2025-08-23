@@ -25,5 +25,6 @@ images:
 - gcr.io/ADD_YOUR_GCP_PROJECT_ID_HERE/pgadmin
 
 # The trigger wouldn't work without this logging setting addition
-logsBucket: gs://stately-lambda-469721-p8-cloudbuild-logs
+options:
+  logging: CLOUD_LOGGING_ONLY
 
