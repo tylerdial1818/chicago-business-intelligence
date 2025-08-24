@@ -318,7 +318,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func GetTaxiTrips(db *sql.DB) {
 
-	// This function is NOT complete
 	// It provides code-snippets for the data source: https://data.cityofchicago.org/Transportation/Taxi-Trips/wrvz-psew
 	// You need to complete the implmentation and add the data source: https://data.cityofchicago.org/Transportation/Transportation-Network-Providers-Trips/m6dm-c72p
 
@@ -777,7 +776,6 @@ func GetCommunityAreaUnemployment(db *sql.DB) {
 func GetBuildingPermits(db *sql.DB) {
 	fmt.Println("GetBuildingPermits: Collecting Building Permits Data")
 
-	// This function is NOT complete
 	// It provides code-snippets for the data source: https://data.cityofchicago.org/Buildings/Building-Permits/ydr8-5enu/data
 
 	// Data Collection needed from data source:
@@ -843,7 +841,7 @@ func GetBuildingPermits(db *sql.DB) {
 
 	// While doing unit-testing keep the limit value to 500
 	// later you could change it to 1000, 2000, 10,000, etc.
-	var url = "https://data.cityofchicago.org/resource/building-permits.json?$limit=500"
+	var url = "https://data.cityofchicago.org/resource/ydr8-5enu.json?$limit=500" // minimal fix: use dataset ID
 
 	tr := &http.Transport{
 		MaxIdleConns:       10,
@@ -856,6 +854,11 @@ func GetBuildingPermits(db *sql.DB) {
 	res, err := client.Get(url)
 	if err != nil {
 		panic(err)
+	}
+	defer res.Body.Close()               // minimal addition
+	if res.StatusCode != http.StatusOK { // minimal addition
+		log.Printf("Building Permits API returned non-200: %d", res.StatusCode)
+		return
 	}
 
 	fmt.Println("Received data from SODA REST API for Building Permits")
@@ -1080,7 +1083,8 @@ func GetBuildingPermits(db *sql.DB) {
 		"ycoordinate",
 		"latitude",
 		"longitude" )
-		values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11, $12, $13, $14, $15,$16, $17, $18, $19, $20,$21, $22, $23, $24, $25,$26, $27, $28, $29,$30,$31, $32, $33, $34, $35,$36, $37, $38, $39, $40)`
+		values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11, $12, $13, $14, $15,$16, $17, $18, $19, $20,$21, $22, $23, $24, $25,$26, $27, $28, $29,$30,$31, $32, $33, $34, $35,$36, $37, $38, $39, $40)
+		ON CONFLICT ("permit_id") DO NOTHING` // minimal addition
 
 		_, err = db.Exec(
 			sql,
