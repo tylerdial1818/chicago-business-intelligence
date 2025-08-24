@@ -617,6 +617,12 @@ func GetCommunityAreaUnemployment(db *sql.DB) {
 		panic(err)
 	}
 
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		log.Printf("Community Areas API returned non-200: %d", res.StatusCode)
+		return
+	}
+
 	fmt.Println("Community Areas Unemplyment: Received data from SODA REST API for Unemployment")
 
 	body, _ := ioutil.ReadAll(res.Body)
@@ -726,7 +732,8 @@ func GetCommunityAreaUnemployment(db *sql.DB) {
 		"no_high_school_diploma" , 
 		"unemployment" , 
 		"per_capita_income" )
-		values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11, $12, $13, $14, $15,$16, $17, $18, $19, $20,$21, $22, $23, $24, $25,$26, $27, $28, $29)`
+		values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11, $12, $13, $14, $15,$16, $17, $18, $19, $20,$21, $22, $23, $24, $25,$26, $27, $28, $29)
+		ON CONFLICT ("community_area") DO NOTHING`
 
 		_, err = db.Exec(
 			sql,
