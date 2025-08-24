@@ -275,9 +275,8 @@ func main() {
 		go GetCommunityAreaUnemployment(db)
 		go GetBuildingPermits(db)
 		go GetTaxiTrips(db)
-
-		// go GetCovidDetails(db)
-		// go GetCCVIDetails(db)
+		go GetCovidDetails(db)
+		go GetCCVIDetails(db)
 
 		http.HandleFunc("/", handler)
 
@@ -384,9 +383,14 @@ func GetTaxiTrips(db *sql.DB) {
 	client := &http.Client{Transport: tr}
 
 	res, err := client.Get(url)
-
 	if err != nil {
 		panic(err)
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		log.Printf("wrvz-psew returned non-200: %d", res.StatusCode)
+		return
 	}
 
 	fmt.Println("Received data from SODA REST API for Taxi Trips")
@@ -402,6 +406,12 @@ func GetTaxiTrips(db *sql.DB) {
 	res_2, err := http.Get(url_2)
 	if err != nil {
 		panic(err)
+	}
+
+	defer res_2.Body.Close()
+	if res_2.StatusCode != http.StatusOK {
+		log.Printf("m6dm-c72p returned non-200: %d", res_2.StatusCode)
+		return
 	}
 
 	fmt.Println("Received data from SODA REST API for Transportation-Network-Providers-Trips")
@@ -484,8 +494,11 @@ func GetTaxiTrips(db *sql.DB) {
 		fmt.Println(pickup_location)
 
 		pickup_address_list, _ := geocoder.GeocodingReverse(pickup_location)
-		pickup_address := pickup_address_list[0]
-		pickup_zip_code := pickup_address.PostalCode
+		var pickup_zip_code string
+		if len(pickup_address_list) > 0 { // minimal guard
+			pickup_address := pickup_address_list[0]
+			pickup_zip_code = pickup_address.PostalCode
+		}
 
 		// Using dropoff_centroid_latitude and dropoff_centroid_longitude in geocoder.GeocodingReverse
 		// we could find the dropoff zip-code
@@ -499,11 +512,15 @@ func GetTaxiTrips(db *sql.DB) {
 		}
 
 		dropoff_address_list, _ := geocoder.GeocodingReverse(dropoff_location)
-		dropoff_address := dropoff_address_list[0]
-		dropoff_zip_code := dropoff_address.PostalCode
+		var dropoff_zip_code string
+		if len(dropoff_address_list) > 0 { // guard
+			dropoff_address := dropoff_address_list[0]
+			dropoff_zip_code = dropoff_address.PostalCode
+		}
 
 		sql := `INSERT INTO taxi_trips ("trip_id", "trip_start_timestamp", "trip_end_timestamp", "pickup_centroid_latitude", "pickup_centroid_longitude", "dropoff_centroid_latitude", "dropoff_centroid_longitude", "pickup_zip_code", 
-			"dropoff_zip_code") values($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+			"dropoff_zip_code") values($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			ON CONFLICT ("trip_id") DO NOTHING`
 
 		_, err = db.Exec(
 			sql,
