@@ -1153,9 +1153,95 @@ func GetBuildingPermits(db *sql.DB) {
 ////////////////////////////////////////////////////////////////////////////////////
 
 func GetCovidDetails(db *sql.DB) {
+	fmt.Println("GetCovidDetails: Collecting COVID-19 weekly metrics by ZIP")
 
-	fmt.Println("ADD-YOUR-CODE-HERE - To Implement GetCovidDetails")
+	// Recreate table (simple for unit testing / prototyping)
+	drop := `DROP TABLE IF EXISTS covid_cases;`
+	if _, err := db.Exec(drop); err != nil {
+		panic(err)
+	}
 
+	// Keep types simple/forgiving (strings), like other functions in this file
+	create := `CREATE TABLE IF NOT EXISTS "covid_cases" (
+		"id" SERIAL,
+		"zip_code" VARCHAR(10),
+		"week_number" VARCHAR(16),
+		"week_start" VARCHAR(32),
+		"week_end" VARCHAR(32),
+		"cases_weekly" VARCHAR(32),
+		"cases_cumulative" VARCHAR(32),
+		"case_rate_weekly" VARCHAR(32),
+		"case_rate_cumulative" VARCHAR(32),
+		"percent_tested_positive_weekly" VARCHAR(32),
+		"percent_tested_positive_cumulative" VARCHAR(32),
+		"population" VARCHAR(32),
+		PRIMARY KEY ("id")
+	);`
+	if _, err := db.Exec(create); err != nil {
+		panic(err)
+	}
+
+	// Pull a manageable slice for unit tests; raise $limit later if desired
+	url := "https://data.cityofchicago.org/resource/yhhz-zm2v.json?$limit=500"
+
+	tr := &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    300 * time.Second,
+		DisableCompression: true,
+	}
+	client := &http.Client{Transport: tr}
+
+	res, err := client.Get(url)
+	if err != nil {
+		panic(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		log.Printf("GetCovidDetails: non-200 from API: %d", res.StatusCode)
+		return
+	}
+
+	body, _ := ioutil.ReadAll(res.Body)
+	var items CovidJsonRecords
+	if err := json.Unmarshal(body, &items); err != nil {
+		panic(err)
+	}
+
+	log.Printf("GetCovidDetails: received %d records", len(items))
+
+	stmt := `INSERT INTO covid_cases
+	("zip_code","week_number","week_start","week_end",
+	 "cases_weekly","cases_cumulative","case_rate_weekly","case_rate_cumulative",
+	 "percent_tested_positive_weekly","percent_tested_positive_cumulative","population")
+	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11);`
+
+	for _, r := range items {
+		// Minimal defensive checks
+		if r.Zip_code == "" || r.Week_number == "" {
+			continue
+		}
+
+		if _, err := db.Exec(stmt,
+			r.Zip_code,
+			r.Week_number,
+			r.Week_start,
+			r.Week_end,
+			r.Cases_weekly,
+			r.Cases_cumulative,
+			r.Case_rate_weekly,
+			r.Case_rate_cumulative,
+			r.Percent_tested_positive_weekly,
+			r.Percent_tested_positive_cumulative,
+			r.Population,
+		); err != nil {
+			// Skip bad rows but don't crash the whole process
+			log.Printf("GetCovidDetails: insert error for zip %s week %s: %v", r.Zip_code, r.Week_number, err)
+			continue
+		}
+	}
+
+	fmt.Println("Completed inserting rows into covid_cases")
 }
 
 // //////////////////////////////////////////////////////////////////////////////////
@@ -1189,8 +1275,80 @@ func GetCovidDetails(db *sql.DB) {
 // ":@computed_region_43wa_7qmu":"30"
 // //////////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////
+
 func GetCCVIDetails(db *sql.DB) {
+	fmt.Println("GetCCVIDetails: Collecting CCVI (COVID Community Vulnerability Index)")
 
-	fmt.Println("ADD-YOUR-CODE-HERE - To Implement GetCCVIDetails")
+	// Recreate table for simple demos/tests
+	drop := `DROP TABLE IF EXISTS ccvi;`
+	if _, err := db.Exec(drop); err != nil {
+		panic(err)
+	}
 
+	create := `CREATE TABLE IF NOT EXISTS "ccvi" (
+		"id" SERIAL,
+		"geography_type" VARCHAR(8),                 -- "CA" (community area) or "ZIP"
+		"community_area_or_zip" VARCHAR(16),
+		"community_area_name" VARCHAR(255),
+		"ccvi_score" VARCHAR(32),
+		"ccvi_category" VARCHAR(32),
+		PRIMARY KEY ("id")
+	);`
+	if _, err := db.Exec(create); err != nil {
+		panic(err)
+	}
+
+	// All-geography CCVI dataset (has both CA and ZIP)
+	url := "https://data.cityofchicago.org/resource/xhc6-88s9.json?$limit=500"
+
+	tr := &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    300 * time.Second,
+		DisableCompression: true,
+	}
+	client := &http.Client{Transport: tr}
+
+	res, err := client.Get(url)
+	if err != nil {
+		panic(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		log.Printf("GetCCVIDetails: non-200 from API: %d", res.StatusCode)
+		return
+	}
+
+	body, _ := ioutil.ReadAll(res.Body)
+	var items CCVIJsonRecords
+	if err := json.Unmarshal(body, &items); err != nil {
+		panic(err)
+	}
+
+	log.Printf("GetCCVIDetails: received %d records", len(items))
+
+	stmt := `INSERT INTO ccvi
+	("geography_type","community_area_or_zip","community_area_name","ccvi_score","ccvi_category")
+	VALUES ($1,$2,$3,$4,$5);`
+
+	for _, r := range items {
+		// basic sanity so we don't insert empty keys
+		if r.Geography_type == "" || r.Community_area_or_ZIP_code == "" {
+			continue
+		}
+
+		if _, err := db.Exec(stmt,
+			r.Geography_type,
+			r.Community_area_or_ZIP_code,
+			r.Community_name,
+			r.CCVI_score,
+			r.CCVI_category,
+		); err != nil {
+			log.Printf("GetCCVIDetails: insert error for %s %s: %v",
+				r.Geography_type, r.Community_area_or_ZIP_code, err)
+			continue
+		}
+	}
+
+	fmt.Println("Completed inserting rows into ccvi")
 }
