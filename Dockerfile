@@ -1,13 +1,13 @@
-# syntax=docker/dockerfile:1
-FROM golang:1.17-alpine
-ENV PORT 8080
-ENV HOSTDIR 0.0.0.0
-
-EXPOSE 8080
+FROM golang:1.21-alpine AS builder
 WORKDIR /app
-COPY go.mod ./
-COPY go.sum ./
-RUN go mod tidy
-COPY . ./
-RUN go build -o /main
-CMD [ "/main" ]
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o server main.go
+
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /app/server .
+EXPOSE 8080
+CMD ["./server"]
